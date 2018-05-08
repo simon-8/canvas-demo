@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+    var canvas = document.getElementById('myCanvas'),
+        context = canvas.getContext('2d'),
+        mouseX = 0,
+        mouseY = 0,
+        canvasWidth,
+        canvasHeight,
+        timer,
+        maxRadius = 20,// 最大圆半径
+        maxDistance = 50,// 距离鼠标最远距离
+        pointArr = [],
+        colorArray = ['#272F32', '#9DBDC6', '#FF3D2E', '#DAEAEF'] ;
+
+    function resizeCanvas() {
+        canvasWidth = canvas.width = window.innerWidth;
+        canvasHeight = canvas.height = window.innerHeight;
+    }
+
+    canvas.onmousemove = function(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    };
+
+    function count() {
+        for (var i = 0; i < 800; i++) {
+            var randomX = Math.random() * canvasWidth;
+            var randomY = Math.random() * canvasHeight;
+            var randomRadius = Math.random() * 5;
+            pointArr.push(new Circle(randomX, randomY, randomRadius));
+        }
+    }
+
+    // X轴 Y轴 半径
+    // 一开始就定义此球方向和位移距离 每次update更新此球定位 如果到了边界 反转该球滚动方向
+    function Circle(x, y, radius) {
+        var randomColorIndex = Math.floor(Math.random() * 4);
+        var randomTrueOrFalse = Math.floor(Math.random() * 2);
+
+        this.x = x;
+        this.y = y;
+
+        this.radius = radius;
+        this.color = colorArray[randomColorIndex];
+
+        if (randomTrueOrFalse) {
+            this.xSpeed = Math.random();
+            this.ySpeed = Math.random();
+        } else {
+            this.xSpeed = -Math.random();
+            this.ySpeed = -Math.random();
+        }
+
+        this.update = function() {
+            this.x += this.xSpeed;
+            this.y += this.ySpeed;
+
+            this.distanceX = mouseX - this.x;
+            this.distanceY = mouseY - this.y;
+
+            // 移动到X轴上(下)限 反转方向
+            if (this.x + radius > canvasWidth || this.x - radius < 0) {
+                this.xSpeed = -this.xSpeed;
+            }
+            // 移动到Y轴上(下)限 反转方向
+            if (this.y + radius > canvasHeight || this.y - radius< 0) {
+                this.ySpeed = -this.ySpeed;
+            }
+            // 鼠标与球距离maxDistance像素以内时  增加球半径
+            if (this.distanceX < maxDistance && this.distanceX > -maxDistance && this.distanceY < maxDistance && this.distanceY > -maxDistance && this.radius < maxRadius) {
+                this.radius += 2;
+            } else if (this.distanceX < maxDistance && this.distanceX > -maxDistance && this.distanceY < maxDistance && this.distanceY > -maxDistance) {
+                // nothing to do
+            } else {
+                if (this.radius > 3) {
+                    this.radius -= 2;
+                }
+            }
+            this.draw();
+        };
+        this.draw = function() {
+            context.beginPath();
+            context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            context.fillStyle = this.color;
+            context.fill();
+        };
+    }
+
+    function updateAll() {
+        context.clearRect(0, 0, canvasWidth, canvasHeight);
+        for (var i = 0; i < pointArr.length; i++) {
+            pointArr[i].update();
+        }
+        clearTimeout(timer);
+        timer = setTimeout(updateAll, 10);
+    }
+    resizeCanvas();
+    count();
+    updateAll();
+</script>
+</body>
+</html>
